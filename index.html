@@ -516,7 +516,6 @@ let isPlaying = false;
 let quality = '320';
 let historyArr = [];
 let activeQuery = '';
-let debounceTimer = null;
 let allSongsFlat = [];
 let currentIndex = -1;
 let isShuffle = false;
@@ -1053,11 +1052,9 @@ searchForm.addEventListener('submit',e=>{
 });
 searchInput.addEventListener('input',()=>{
   const v=searchInput.value.trim();
-  clearTimeout(debounceTimer);
   if(!v){ showHome(); return; }
-  debounceTimer=setTimeout(()=>runSearch(v),400);
+  runSearch(v);
 });
-
 // =========== HISTORY ===========
 function addToHistory(q){
   if(!q)return;
