@@ -622,9 +622,11 @@ function emptyProfile(){
 }
 let tasteProfile = emptyProfile();
 let searchLog = []; // [{query, songs:[...], ts}]
+let playLog = []; // [{songId, title, artist, ts}] — every song actually pressed play on
 
 const TP_KEY = 'rv_taste_profile';
 const SL_KEY = 'rv_search_log';
+const PL_KEY = 'rv_play_log';
 
 function loadTasteState(){
   try{
@@ -632,12 +634,15 @@ function loadTasteState(){
     if(p) tasteProfile = JSON.parse(p);
     const l = sessionStorage.getItem(SL_KEY);
     if(l) searchLog = JSON.parse(l);
-  }catch(e){ tasteProfile = emptyProfile(); searchLog = []; }
+    const pl = sessionStorage.getItem(PL_KEY);
+    if(pl) playLog = JSON.parse(pl);
+  }catch(e){ tasteProfile = emptyProfile(); searchLog = []; playLog = []; }
 }
 function saveTasteState(){
   try{
     sessionStorage.setItem(TP_KEY, JSON.stringify(tasteProfile));
     sessionStorage.setItem(SL_KEY, JSON.stringify(searchLog));
+    sessionStorage.setItem(PL_KEY, JSON.stringify(playLog));
   }catch(e){}
 }
 
@@ -645,7 +650,6 @@ function bump(bucket, key, amount){
   if(!key) return;
   bucket[key] = (bucket[key]||0) + amount;
 }
-
 
 // Extract signals from the literal query text itself (works even with zero API results)
 function extractTextSignals(query){
@@ -663,14 +667,15 @@ function extractTextSignals(query){
 // Extract signals from actual returned song metadata — this is the strongest
 // signal because it reflects what the user *actually* searched into existence,
 // not just words they typed.
-function extractSongSignals(songs){
+function extractSongSignals(songs, unrecognizedWeight){
+  const w = unrecognizedWeight != null ? unrecognizedWeight : 4;
   const sig = {languages:[], artists:[]};
   songs.slice(0,6).forEach(s=>{
     if(s.language) sig.languages.push(s.language[0].toUpperCase()+s.language.slice(1));
     (s.artists?.primary||[]).forEach(a=>{
       const canon = ALIAS_TO_ARTIST[a.name?.toLowerCase()] || (ARTIST_GRAPH[a.name] ? a.name : null);
       if(canon) sig.artists.push(canon);
-      else bump(tasteProfile.artists, a.name, 4); // unrecognized artist still tracked directly
+      else bump(tasteProfile.artists, a.name, w); // unrecognized artist still tracked directly
     });
   });
   return sig;
@@ -680,7 +685,7 @@ function extractSongSignals(songs){
 // query text and (once fetched) the resulting songs into the profile.
 function recordSearchSignal(query, songs){
   const textSig = extractTextSignals(query);
-  const songSig = songs ? extractSongSignals(songs) : {languages:[],artists:[]};
+  const songSig = songs ? extractSongSignals(songs, 12) : {languages:[],artists:[]};
 
   // Weights — tuned so a concrete artist match dominates a vague keyword match,
   // and metadata-confirmed artists outweigh merely-typed artist names.
@@ -705,6 +710,31 @@ function recordSearchSignal(query, songs){
 
   searchLog.unshift({query, ts:Date.now(), songIds:(songs||[]).slice(0,5).map(s=>s.id), songTitles:(songs||[]).slice(0,3).map(s=>cleanName(s.name))});
   searchLog = searchLog.slice(0,40);
+  saveTasteState();
+}
+
+// Every PLAY action (clicking a card anywhere — home rails, search results,
+// recommendation rails, Continue Listening, featured card, next/prev) teaches
+// the engine too. Weighted lighter than an explicit search, since pressing
+// play on something already shown to you is a softer signal than typing a
+// query for it — but it still accumulates, so pure browse-and-play behavior
+// builds a real taste profile even if the user never types a single search.
+let isRestoringSession = false; // guard: restoring a saved session should not double-count
+function recordPlaySignal(song){
+  if(isRestoringSession || !song) return;
+  const songSig = extractSongSignals([song], 5);
+  songSig.artists.forEach(a=>bump(tasteProfile.artists, a, 5));
+  songSig.languages.forEach(l=>bump(tasteProfile.languages, l, 3));
+  songSig.artists.forEach(a=>{
+    const info = ARTIST_GRAPH[a];
+    if(info){
+      bump(tasteProfile.languages, info.language, 2);
+      bump(tasteProfile.eras, info.era, 2);
+      bump(tasteProfile.moods, info.mood, 2);
+    }
+  });
+  playLog.unshift({songId:song.id, title:cleanName(song.name), artist:getArtist(song), ts:Date.now()});
+  playLog = playLog.slice(0,60);
   saveTasteState();
 }
 
@@ -921,6 +951,9 @@ function loadAndPlay(song, list, idx){
   if(list) allSongsFlat = list;
   if(idx !== undefined) currentIndex = idx;
 
+  // Every play — not just every search — teaches the taste engine.
+  recordPlaySignal(song);
+
   const url = getUrl(song, quality);
   if(!url){ toast('No stream available for this track.'); return; }
 
@@ -955,6 +988,30 @@ function loadAndPlay(song, list, idx){
   document.querySelectorAll(`[data-song-id="${song.id}"] .eq-bars`).forEach(eq=>eq.classList.remove('paused'));
 
   try{ sessionStorage.setItem(SK.song,JSON.stringify(song)); sessionStorage.setItem(SK.pos,'0'); }catch(e){}
+
+  // Refresh personalized rails on the home screen — but debounced and only
+  // when the top signal has actually changed, so clicking through several
+  // songs in a row doesn't yank the grid out from under the user on every click.
+  if(homeView.style.display !== 'none'){
+    scheduleRecommendationRefresh();
+  }
+}
+
+let recRefreshTimer = null;
+let lastRecSignature = '';
+function scheduleRecommendationRefresh(){
+  clearTimeout(recRefreshTimer);
+  recRefreshTimer = setTimeout(()=>{
+    const sig = JSON.stringify([
+      topEntries(tasteProfile.artists,3).map(e=>e[0]),
+      topEntries(tasteProfile.languages,1).map(e=>e[0]),
+      topEntries(tasteProfile.eras,1).map(e=>e[0]),
+      topEntries(tasteProfile.moods,1).map(e=>e[0]),
+    ]);
+    if(sig === lastRecSignature) return; // nothing meaningful changed — skip the re-fetch
+    lastRecSignature = sig;
+    renderRecommendationZone();
+  }, 1200);
 }
 
 function onTimeUpdate(){
@@ -1265,16 +1322,18 @@ function buildFeatured(songs){
 async function renderRecommendationZone(){
   recommendationZone.innerHTML='';
 
-  // ---- Continue Listening: literally the last few searched/played songs ----
+  // ---- Continue Listening: merges actual plays + searched songs, most recent first ----
   const recentSongs = [];
   const seenIds = new Set();
-  for(const entry of searchLog){
-    for(const id of entry.songIds||[]){
-      if(seenIds.has(id)) continue;
-      const found = allSongsFlat.find(s=>s.id===id);
-      if(found){ recentSongs.push(found); seenIds.add(id); }
-    }
-    if(recentSongs.length>=8) break;
+  const timeline = [
+    ...playLog.map(p=>({id:p.songId, ts:p.ts})),
+    ...searchLog.flatMap(entry=>(entry.songIds||[]).map(id=>({id, ts:entry.ts}))),
+  ].sort((a,b)=>b.ts-a.ts);
+  for(const {id} of timeline){
+    if(seenIds.has(id)) continue;
+    const found = allSongsFlat.find(s=>s.id===id);
+    if(found){ recentSongs.push(found); seenIds.add(id); }
+    if(recentSongs.length>=10) break;
   }
   if(recentSongs.length){
     const block = document.createElement('div');
@@ -1292,6 +1351,12 @@ async function renderRecommendationZone(){
   if(!hasSignal()) return; // nothing learned yet — skip personalized rails entirely
 
   const plan = buildRecommendationPlan();
+  lastRecSignature = JSON.stringify([
+    topEntries(tasteProfile.artists,3).map(e=>e[0]),
+    topEntries(tasteProfile.languages,1).map(e=>e[0]),
+    topEntries(tasteProfile.eras,1).map(e=>e[0]),
+    topEntries(tasteProfile.moods,1).map(e=>e[0]),
+  ]);
   if(!plan.rails.length) return;
 
   // ---- Taste strip: shows what the engine has learned, transparently ----
@@ -1400,9 +1465,15 @@ function restoreSession(){
 // =================================================================================
 // SEARCH
 // =================================================================================
+let searchRequestId = 0;
 async function runSearch(query){
   const q=(query||'').trim();
   if(!q) return;
+  if(q.length < 2){
+    // too short to be meaningful — avoid noisy API calls and noisy taste signal
+    document.getElementById('activeQueryLabel').textContent='Keep typing…';
+    return;
+  }
   activeQuery=q;
   addToHistory(q);
   document.getElementById('activeQueryLabel').textContent=`Results for: "${q}"`;
@@ -1410,8 +1481,11 @@ async function runSearch(query){
   searchResultsGrid.innerHTML='<div class="loader-wrap"><div class="loader"></div><p class="loader-text">Fetching tracks…</p></div>';
   resultsSection.classList.add('visible');
   homeView.style.display='none';
+
+  const reqId = ++searchRequestId; // guards against a slower earlier request overwriting a newer one
   try{
     const songs=await fetchSongs(q);
+    if(reqId !== searchRequestId) return; // a newer search already superseded this one
     renderGrid(songs,searchResultsGrid);
     resultsBadge.textContent=`${songs.length} tracks`;
     document.getElementById('resultsCountLabel').textContent=`${songs.length} results`;
@@ -1421,6 +1495,7 @@ async function runSearch(query){
     // feed the taste engine — this is what powers the home-screen recommendations
     recordSearchSignal(q, songs);
   }catch(err){
+    if(reqId !== searchRequestId) return;
     searchResultsGrid.innerHTML='<div class="status-card">Search failed. Try again.</div>';
     document.getElementById('resultsCountLabel').textContent='Error';
     recordSearchSignal(q, []); // even a failed fetch still teaches the engine from query text
@@ -1438,28 +1513,20 @@ function showHome(e){
   renderRecommendationZone(); // refresh rails — taste may have updated since last view
 }
 
+let liveSearchTimer = null;
 searchForm.addEventListener('submit',e=>{
   e.preventDefault();
+  clearTimeout(liveSearchTimer);
   const v=searchInput.value.trim();
   if(v) runSearch(v);
 });
-let searchTimer;
-
-searchInput.addEventListener('input', () => {
-  const v = searchInput.value.trim();
-
-  clearTimeout(searchTimer);
-
-  if (!v) {
-    showHome();
-    return;
-  }
-
-  if (v.length < 2) return;
-
-  searchTimer = setTimeout(() => {
-    runSearch(v);
-  }, 300);
+searchInput.addEventListener('input',()=>{
+  const v=searchInput.value.trim();
+  clearTimeout(liveSearchTimer);
+  if(!v){ showHome(); return; }
+  // debounce: wait for a short pause in typing before firing the search,
+  // so we don't fire a network request on every keystroke
+  liveSearchTimer = setTimeout(()=>{ runSearch(v); }, 450);
 });
 
 // =================================================================================
