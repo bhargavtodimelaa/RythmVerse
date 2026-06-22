@@ -112,6 +112,18 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:1.5rem
 .chip:hover{border-color:var(--accent-glow);color:var(--accent2);}
 .chip.active{background:var(--accent-dim);border-color:var(--accent-glow);color:#fff2e7;}
 
+/* ===== SEARCH SUGGESTIONS DROPDOWN ===== */
+.suggest-dropdown{position:absolute;top:calc(100% - 0.5rem);left:0;right:0;z-index:50;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 16px 40px rgba(0,0,0,0.5);overflow:hidden;opacity:0;transform:translateY(-6px);pointer-events:none;transition:var(--tr);max-height:340px;overflow-y:auto;}
+.suggest-dropdown.visible{opacity:1;transform:translateY(0);pointer-events:all;}
+.suggest-group-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text3);padding:0.7rem 1rem 0.3rem;}
+.suggest-item{display:flex;align-items:center;gap:0.7rem;padding:0.6rem 1rem;cursor:pointer;transition:background 0.15s ease;}
+.suggest-item:hover,.suggest-item.kbd-active{background:var(--accent-dim);}
+.suggest-item svg{width:16px;height:16px;fill:var(--text3);flex-shrink:0;}
+.suggest-item:hover svg,.suggest-item.kbd-active svg{fill:var(--accent);}
+.suggest-text{flex:1;min-width:0;font-size:0.86rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.suggest-text b{color:var(--accent2);font-weight:700;}
+.suggest-tag{font-size:0.66rem;color:var(--text3);background:var(--surface3);padding:2px 7px;border-radius:var(--radius-pill);flex-shrink:0;}
+
 /* ===== SECTION ===== */
 .section-header{display:flex;align-items:center;justify-content:space-between;margin:2rem 0 1.1rem;gap:1rem;}
 .section-label{display:flex;align-items:center;gap:0.6rem;min-width:0;}
@@ -336,7 +348,7 @@ footer span{color:var(--accent);}
     <div class="badge-live">LIVE</div>
   </nav>
 
-  <div class="search-wrap">
+  <div class="search-wrap" id="searchWrap" style="position:relative;">
     <form class="search-bar" id="searchForm">
       <svg viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 1 0 4.55 13.46l4.75 4.74a1 1 0 0 0 1.41-1.41l-4.74-4.75A7.5 7.5 0 0 0 10.5 3zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z"/></svg>
       <input type="text" id="searchInput" placeholder="Search songs, artists, albums…" autocomplete="off">
@@ -344,6 +356,7 @@ footer span{color:var(--accent);}
         <svg viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 1 0 4.55 13.46l4.75 4.74a1 1 0 0 0 1.41-1.41l-4.74-4.75A7.5 7.5 0 0 0 10.5 3zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z"/></svg>
       </button>
     </form>
+    <div class="suggest-dropdown" id="suggestDropdown"></div>
     <div class="search-meta-row">
       <span id="activeQueryLabel">Explore curated picks</span>
       <span id="resultsCountLabel"></span>
@@ -807,11 +820,26 @@ function buildRecommendationPlan(){
     });
   }
 
-  // taste pills for the little "what we learned" strip
+  // "Inspired By Your Searches" — uses the rawTerms bucket directly. This is
+  // the catch-all that keeps every typed word contributing to recommendations,
+  // even words that don't map to a known artist/language/era/mood keyword
+  // (e.g. someone repeatedly searching "wedding songs" or a movie name).
+  const topTerms = topEntries(tasteProfile.rawTerms, 4).map(([k])=>k);
+  if(topTerms.length){
+    plan.rails.push({
+      key:'terms', title:'Inspired By Your Searches',
+      sub:`Built from words you've searched: ${topTerms.slice(0,3).join(', ')}`,
+      queries: topTerms.slice(0,3).map(t=>`${t} songs`),
+    });
+  }
+
+  // taste pills for the little "what we learned" strip — now reflects ALL
+  // weighted buckets (artist, language, era, mood, AND raw search terms)
   if(primaryArtist) plan.tastePills.push({label:primaryArtist, weight:tasteProfile.artists[primaryArtist]});
   if(topLanguage) plan.tastePills.push({label:topLanguage, weight:tasteProfile.languages[topLanguage]});
   if(topEra) plan.tastePills.push({label:topEra, weight:tasteProfile.eras[topEra]});
   if(topMood) plan.tastePills.push({label:topMood, weight:tasteProfile.moods[topMood]});
+  topTerms.slice(0,2).forEach(t=>plan.tastePills.push({label:`"${t}"`, weight:tasteProfile.rawTerms[t]}));
   const maxW = Math.max(1,...plan.tastePills.map(p=>p.weight));
   plan.tastePills.forEach(p=>p.pct = Math.min(100, Math.round((p.weight/maxW)*100)));
 
@@ -1469,6 +1497,7 @@ let searchRequestId = 0;
 async function runSearch(query){
   const q=(query||'').trim();
   if(!q) return;
+  closeSuggestions();
   if(q.length < 2){
     // too short to be meaningful — avoid noisy API calls and noisy taste signal
     document.getElementById('activeQueryLabel').textContent='Keep typing…';
@@ -1513,21 +1542,144 @@ function showHome(e){
   renderRecommendationZone(); // refresh rails — taste may have updated since last view
 }
 
+// =================================================================================
+// SEARCH SUGGESTIONS — typeahead dropdown
+// =================================================================================
+// Suggestions are assembled from three sources, each tagged so the user can see
+// *why* a suggestion is shown:
+//   1. Past search queries (exact history) — tag "recent"
+//   2. Scored raw search terms from the taste profile — tag "you search this"
+//   3. Known artist names (and aliases) from the knowledge graph — tag "artist"
+// All three are filtered by substring match against what's currently typed,
+// then ranked: history match > weighted term match > artist match, deduped by
+// lowercase text so the same suggestion never appears twice.
+const suggestDropdown = document.getElementById('suggestDropdown');
+let suggestActiveIndex = -1;
+let currentSuggestions = [];
+
+function buildSuggestions(typed){
+  const q = typed.toLowerCase();
+  if(!q) return [];
+  const seen = new Set();
+  const out = [];
+
+  // 1. History — exact past queries containing what's typed
+  historyArr.forEach(h=>{
+    const key = h.toLowerCase();
+    if(key.includes(q) && !seen.has(key)){ seen.add(key); out.push({text:h, tag:'recent', score:100}); }
+  });
+
+  // 2. Raw search terms from the taste profile, weighted — surfaces things like
+  // "wedding" -> "wedding songs" even if it was only ever part of a longer query
+  topEntries(tasteProfile.rawTerms, 12).forEach(([term,weight])=>{
+    if(term.includes(q) && q.length>=2){
+      const suggestion = `${term} songs`;
+      const key = suggestion.toLowerCase();
+      if(!seen.has(key)){ seen.add(key); out.push({text:suggestion, tag:'you search this', score:weight}); }
+    }
+  });
+
+  // 3. Known artists (by canonical name or alias) matching what's typed
+  Object.keys(ARTIST_GRAPH).forEach(name=>{
+    const aliasHit = ARTIST_GRAPH[name].aliases.some(a=>a.includes(q));
+    if((name.toLowerCase().includes(q) || aliasHit)){
+      const suggestion = `${name} hits`;
+      const key = suggestion.toLowerCase();
+      if(!seen.has(key)){ seen.add(key); out.push({text:suggestion, tag:'artist', score: topArtistsLookup()[name] ? 60+topArtistsLookup()[name] : 40}); }
+    }
+  });
+
+  return out.sort((a,b)=>b.score-a.score).slice(0,7);
+}
+
+function topArtistsLookup(){ return tasteProfile.artists; }
+
+function highlightMatch(text, typed){
+  const idx = text.toLowerCase().indexOf(typed.toLowerCase());
+  if(idx===-1) return esc(text);
+  return esc(text.slice(0,idx)) + '<b>' + esc(text.slice(idx,idx+typed.length)) + '</b>' + esc(text.slice(idx+typed.length));
+}
+
+const SUGGEST_ICONS = {
+  recent: '<path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 2.06 4.94l-1.42 1.41A9 9 0 1 0 13 3zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8z"/>',
+  'you search this': '<path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-9.09 9.08-4-4L2 16.99z"/>',
+  artist: '<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>',
+};
+
+function renderSuggestions(){
+  if(!currentSuggestions.length){ suggestDropdown.classList.remove('visible'); suggestDropdown.innerHTML=''; return; }
+  const typed = searchInput.value.trim();
+  suggestDropdown.innerHTML = currentSuggestions.map((s,i)=>`
+    <div class="suggest-item${i===suggestActiveIndex?' kbd-active':''}" data-idx="${i}">
+      <svg viewBox="0 0 24 24">${SUGGEST_ICONS[s.tag]||SUGGEST_ICONS.recent}</svg>
+      <span class="suggest-text">${highlightMatch(s.text, typed)}</span>
+      <span class="suggest-tag">${esc(s.tag)}</span>
+    </div>`).join('');
+  suggestDropdown.classList.add('visible');
+  suggestDropdown.querySelectorAll('.suggest-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const idx = +el.dataset.idx;
+      chooseSuggestion(idx);
+    });
+  });
+}
+
+function chooseSuggestion(idx){
+  const s = currentSuggestions[idx];
+  if(!s) return;
+  searchInput.value = s.text;
+  closeSuggestions();
+  runSearch(s.text);
+}
+
+function closeSuggestions(){
+  suggestActiveIndex = -1;
+  currentSuggestions = [];
+  suggestDropdown.classList.remove('visible');
+  suggestDropdown.innerHTML='';
+}
+
+document.addEventListener('click',e=>{
+  if(!document.getElementById('searchWrap').contains(e.target)) closeSuggestions();
+});
+
+// =================================================================================
+// SEARCH INPUT WIRING — live debounced search + typeahead suggestions
+// =================================================================================
 let liveSearchTimer = null;
 searchForm.addEventListener('submit',e=>{
   e.preventDefault();
   clearTimeout(liveSearchTimer);
+  closeSuggestions();
   const v=searchInput.value.trim();
   if(v) runSearch(v);
 });
 searchInput.addEventListener('input',()=>{
   const v=searchInput.value.trim();
   clearTimeout(liveSearchTimer);
-  if(!v){ showHome(); return; }
-  // debounce: wait for a short pause in typing before firing the search,
-  // so we don't fire a network request on every keystroke
+  if(!v){ showHome(); closeSuggestions(); return; }
+
+  // refresh suggestion dropdown immediately (no debounce needed — it's local data, no network)
+  currentSuggestions = buildSuggestions(v);
+  suggestActiveIndex = -1;
+  renderSuggestions();
+
+  // debounce the actual network search so we don't fire a request on every keystroke
   liveSearchTimer = setTimeout(()=>{ runSearch(v); }, 450);
 });
+searchInput.addEventListener('keydown',e=>{
+  if(!currentSuggestions.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); suggestActiveIndex = Math.min(currentSuggestions.length-1, suggestActiveIndex+1); renderSuggestions(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); suggestActiveIndex = Math.max(0, suggestActiveIndex-1); renderSuggestions(); }
+  else if(e.key==='Enter' && suggestActiveIndex>=0){ e.preventDefault(); clearTimeout(liveSearchTimer); chooseSuggestion(suggestActiveIndex); }
+  else if(e.key==='Escape'){ closeSuggestions(); }
+});
+searchInput.addEventListener('focus',()=>{
+  const v=searchInput.value.trim();
+  if(v){ currentSuggestions = buildSuggestions(v); renderSuggestions(); }
+});
+
+
 
 // =================================================================================
 // HISTORY (chips row)
