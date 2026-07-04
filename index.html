@@ -378,7 +378,7 @@ footer span{color:var(--accent);}
   </button>
 <div class="shell">
   <nav>
-    <a class="logo" href="#">
+    <a class="logo" href="#" onclick="showHome(event)">
       <div class="logo-icon">
         <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v6a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H5v-1a7 7 0 0 1 14 0v1h-1a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-6a9 9 0 0 0-9-9z"/></svg>
       </div>
@@ -1436,25 +1436,27 @@ function setVolume(v){
 // =================================================================================
 // PLAYER CONTROLS
 // =================================================================================
-mpPlayBtn.onclick  = togglePlay;
-maxPlayBtn.onclick = togglePlay;
-document.getElementById('mpPrev').onclick  = playPrev;
-document.getElementById('mpNext').onclick  = playNext;
-document.getElementById('maxPrev').onclick = playPrev;
-document.getElementById('maxNext').onclick = playNext;
+if(mpPlayBtn) mpPlayBtn.onclick  = togglePlay;
+if(maxPlayBtn) maxPlayBtn.onclick = togglePlay;
+const _mpPrev = document.getElementById('mpPrev'); if(_mpPrev) _mpPrev.onclick = playPrev;
+const _mpNext = document.getElementById('mpNext'); if(_mpNext) _mpNext.onclick = playNext;
+const _maxPrev = document.getElementById('maxPrev'); if(_maxPrev) _maxPrev.onclick = playPrev;
+const _maxNext = document.getElementById('maxNext'); if(_maxNext) _maxNext.onclick = playNext;
 
-mpSlider.oninput  = e=>seekTo(+e.target.value);
-maxSlider.oninput = e=>seekTo(+e.target.value);
-mpQuality.onchange  = e=>changeQuality(e.target.value);
-maxQuality.onchange = e=>changeQuality(e.target.value);
-mpVol.oninput  = e=>setVolume(+e.target.value);
-maxVol.oninput = e=>setVolume(+e.target.value);
+if(mpSlider) mpSlider.oninput  = e=>seekTo(+e.target.value);
+if(maxSlider) maxSlider.oninput = e=>seekTo(+e.target.value);
+if(mpQuality) mpQuality.onchange  = e=>changeQuality(e.target.value);
+if(maxQuality) maxQuality.onchange = e=>changeQuality(e.target.value);
+if(mpVol) mpVol.oninput  = e=>setVolume(+e.target.value);
+if(maxVol) maxVol.oninput = e=>setVolume(+e.target.value);
 
-likeBtn.onclick=()=>{
-  isLiked=!isLiked;
-  likeBtn.classList.toggle('liked',isLiked);
-  toast(isLiked?'Added to liked songs':'Removed from liked songs','heart');
-};
+if(likeBtn){
+  likeBtn.onclick=()=>{
+    isLiked=!isLiked;
+    likeBtn.classList.toggle('liked',isLiked);
+    toast(isLiked?'Added to liked songs':'Removed from liked songs','heart');
+  };
+}
 if (repeatBtn) {
   repeatBtn.onclick = function() {
     isRepeat = !isRepeat;
@@ -1462,25 +1464,28 @@ if (repeatBtn) {
     toast(isRepeat ? 'Repeat on — replaying this song' : 'Repeat off');
   };
 }
-document.getElementById('shareBtn').onclick = ()=>{
-  if(!currentSong) return;
-  const url = new URL(window.location.origin + window.location.pathname);
-  url.searchParams.set('song', cleanName(currentSong.name));
-  url.searchParams.set('artist', getArtist(currentSong).split(',')[0]);
-  // include the internal id for a more robust direct-link
-  if(currentSong.id) url.searchParams.set('id', currentSong.id);
-  navigator.clipboard.writeText(url.toString())
-    .then(()=>toast('Link copied to clipboard!','check'))
-    .catch(()=>toast('Could not copy link.'));
-};
+const _shareBtn = document.getElementById('shareBtn');
+if(_shareBtn){
+  _shareBtn.onclick = ()=>{
+    if(!currentSong) return;
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('song', cleanName(currentSong.name));
+    url.searchParams.set('artist', getArtist(currentSong).split(',')[0]);
+    // include the internal id for a more robust direct-link
+    if(currentSong.id) url.searchParams.set('id', currentSong.id);
+    navigator.clipboard.writeText(url.toString())
+      .then(()=>toast('Link copied to clipboard!','check'))
+      .catch(()=>toast('Could not copy link.'));
+  };
+}
 
-maxShuffleBtn.onclick=()=>{
+if(maxShuffleBtn) maxShuffleBtn.onclick=()=>{
   isShuffle=!isShuffle;
   maxShuffleBtn.classList.toggle('active',isShuffle);
   toast(isShuffle?'Shuffle on':'Shuffle off');
 };
 
-maxLoopBtn.onclick=()=>{
+if(maxLoopBtn) maxLoopBtn.onclick=()=>{
   isLoop=!isLoop;
   maxLoopBtn.classList.toggle('active',isLoop);
   toast(isLoop?'Loop on — looping this song':'Loop off');
@@ -1489,9 +1494,9 @@ maxLoopBtn.onclick=()=>{
 // =================================================================================
 // EXPAND / COLLAPSE
 // =================================================================================
-mpExpandBtn.onclick = openMaxPlayer;
-maxClose.onclick    = closeMaxPlayer;
-document.getElementById('mpInfoClick').onclick = openMaxPlayer;
+if(mpExpandBtn) mpExpandBtn.onclick = openMaxPlayer;
+if(maxClose) maxClose.onclick    = closeMaxPlayer;
+const _mpInfoClick = document.getElementById('mpInfoClick'); if(_mpInfoClick) _mpInfoClick.onclick = openMaxPlayer;
 
 function openMaxPlayer(){
   maxPlayer.classList.add('open');
