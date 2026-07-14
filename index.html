@@ -4128,7 +4128,24 @@ function loadAndPlay(song, list, idx){
   currentSong = song;
   if(list) allSongsFlat = list;
   if(idx !== undefined) currentIndex = idx;
+// Add this to your loadAndPlay function
+function createMusicNote() {
+  const notes = ['♪', '♫', '♬', '♩'];
+  const note = document.createElement('div');
+  note.className = 'music-note';
+  note.textContent = notes[Math.floor(Math.random() * notes.length)];
+  note.style.left = Math.random() * 100 + '%';
+  note.style.top = Math.random() * 50 + 20 + '%';
+  note.style.fontSize = (Math.random() * 20 + 20) + 'px';
+  note.style.color = `hsl(${Math.random() * 40 + 20}, 100%, 60%)`;
+  document.body.appendChild(note);
+  setTimeout(() => note.remove(), 3000);
+}
 
+// Call this when playing a song
+if (isPlaying) {
+  setInterval(createMusicNote, 2000);
+}
   // Every play — not just every search — teaches the taste engine.
   recordPlaySignal(song);
 
