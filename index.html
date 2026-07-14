@@ -7,7 +7,424 @@
 <title>RhythmVerse</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
 <style>
-  
+  /* ========================================
+   👑 PREMIUM ANIMATIONS - ULTIMATE EDITION
+   ======================================== */
+
+/* ===== 1. ALBUM ART 3D ROTATION ON HOVER ===== */
+.max-art {
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+.max-art:hover {
+  transform: perspective(800px) rotateY(-10deg) rotateX(5deg) scale(1.05);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.8), 0 0 60px var(--accent-glow);
+}
+
+/* ===== 2. PARTICLE RAIN EFFECT ON MAX PLAYER ===== */
+.particle-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: particleFall linear infinite;
+  opacity: 0;
+}
+.particle:nth-child(1) { left: 5%; animation-duration: 8s; animation-delay: 0s; width: 2px; height: 2px; }
+.particle:nth-child(2) { left: 15%; animation-duration: 10s; animation-delay: 1s; width: 4px; height: 4px; }
+.particle:nth-child(3) { left: 25%; animation-duration: 7s; animation-delay: 2s; width: 2px; height: 2px; }
+.particle:nth-child(4) { left: 35%; animation-duration: 9s; animation-delay: 0.5s; width: 3px; height: 3px; }
+.particle:nth-child(5) { left: 45%; animation-duration: 11s; animation-delay: 1.5s; width: 4px; height: 4px; }
+.particle:nth-child(6) { left: 55%; animation-duration: 8s; animation-delay: 3s; width: 2px; height: 2px; }
+.particle:nth-child(7) { left: 65%; animation-duration: 10s; animation-delay: 0.8s; width: 3px; height: 3px; }
+.particle:nth-child(8) { left: 75%; animation-duration: 7s; animation-delay: 2.5s; width: 4px; height: 4px; }
+.particle:nth-child(9) { left: 85%; animation-duration: 9s; animation-delay: 1.8s; width: 2px; height: 2px; }
+.particle:nth-child(10) { left: 95%; animation-duration: 11s; animation-delay: 0.3s; width: 3px; height: 3px; }
+.particle:nth-child(11) { left: 10%; animation-duration: 12s; animation-delay: 4s; width: 2px; height: 2px; }
+.particle:nth-child(12) { left: 50%; animation-duration: 8s; animation-delay: 3.5s; width: 3px; height: 3px; }
+.particle:nth-child(13) { left: 70%; animation-duration: 10s; animation-delay: 4.5s; width: 4px; height: 4px; }
+.particle:nth-child(14) { left: 30%; animation-duration: 9s; animation-delay: 5s; width: 2px; height: 2px; }
+.particle:nth-child(15) { left: 90%; animation-duration: 7s; animation-delay: 6s; width: 3px; height: 3px; }
+
+@keyframes particleFall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ===== 3. CARD REVEAL WITH STAGGER ===== */
+.song-card {
+  opacity: 0;
+  animation: cardReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.song-card:nth-child(1) { animation-delay: 0.02s; }
+.song-card:nth-child(2) { animation-delay: 0.06s; }
+.song-card:nth-child(3) { animation-delay: 0.10s; }
+.song-card:nth-child(4) { animation-delay: 0.14s; }
+.song-card:nth-child(5) { animation-delay: 0.18s; }
+.song-card:nth-child(6) { animation-delay: 0.22s; }
+.song-card:nth-child(7) { animation-delay: 0.26s; }
+.song-card:nth-child(8) { animation-delay: 0.30s; }
+.song-card:nth-child(9) { animation-delay: 0.34s; }
+.song-card:nth-child(10) { animation-delay: 0.38s; }
+.song-card:nth-child(11) { animation-delay: 0.42s; }
+.song-card:nth-child(12) { animation-delay: 0.46s; }
+
+@keyframes cardReveal {
+  0% { opacity: 0; transform: scale(0.8) translateY(30px) rotate(-3deg); }
+  100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+}
+
+/* ===== 4. BUTTON MORPHING ANIMATION ===== */
+.mp-play-btn {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-play-btn:hover {
+  transform: scale(1.15) rotate(-5deg);
+  box-shadow: 0 0 50px var(--accent-glow);
+}
+.mp-play-btn:active {
+  transform: scale(0.9) rotate(5deg);
+}
+.mp-play-btn svg {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-play-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* ===== 5. SLIDER WITH GLOWING TRAIL ===== */
+.mp-slider, .max-slider {
+  position: relative;
+  height: 4px;
+  transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-slider:hover, .max-slider:hover {
+  height: 8px;
+}
+.mp-slider::-webkit-slider-thumb,
+.max-slider::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--accent-glow);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-slider:hover::-webkit-slider-thumb,
+.max-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.5);
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+
+/* ===== 6. SHAKE ANIMATION ON LIKE ===== */
+.max-action-btn.liked {
+  animation: likePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes likePop {
+  0% { transform: scale(1); }
+  20% { transform: scale(1.5) rotate(-10deg); }
+  40% { transform: scale(0.8) rotate(10deg); }
+  60% { transform: scale(1.2) rotate(-5deg); }
+  80% { transform: scale(0.9) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* ===== 7. HEART BEAT ANIMATION ===== */
+.max-action-btn.liked svg {
+  animation: heartBeat 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes heartBeat {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(0.8); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* ===== 8. FLOATING MUSIC NOTES ===== */
+.music-note {
+  position: fixed;
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 999;
+  animation: noteFloat 3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  opacity: 0;
+}
+@keyframes noteFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
+  20% { opacity: 1; transform: translateY(-30px) scale(1) rotate(10deg); }
+  80% { opacity: 1; transform: translateY(-100px) scale(1.2) rotate(-10deg); }
+  100% { opacity: 0; transform: translateY(-150px) scale(0.8) rotate(20deg); }
+}
+
+/* ===== 9. GLOWING AMBIENT ORBS WITH PULSE ===== */
+.ambient-orb {
+  animation: orbPulse 4s ease-in-out infinite;
+}
+@keyframes orbPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* ===== 10. SMOOTH PAGE TRANSITION ===== */
+.shell {
+  animation: pageFade 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pageFade {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 11. TOAST ENTER ANIMATION ===== */
+.toast {
+  animation: toastEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes toastEnter {
+  0% { opacity: 0; transform: translateX(50px) scale(0.8); }
+  60% { opacity: 1; transform: translateX(-10px) scale(1.05); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ===== 12. RIPPLE EXPAND ===== */
+.ripple-effect {
+  animation: rippleExpand 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes rippleExpand {
+  0% { transform: scale(0); opacity: 0.8; }
+  100% { transform: scale(5); opacity: 0; }
+}
+
+/* ===== 13. SPINNING LOADER WITH GLOW ===== */
+.loader {
+  border: 4px solid var(--surface3);
+  border-top: 4px solid var(--accent);
+  border-right: 4px solid var(--accent2);
+  border-radius: 50%;
+  animation: spinGlow 1s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  box-shadow: 0 0 30px var(--accent-dim);
+}
+@keyframes spinGlow {
+  0% { transform: rotate(0deg); box-shadow: 0 0 30px var(--accent-dim); }
+  50% { transform: rotate(180deg); box-shadow: 0 0 60px var(--accent-glow); }
+  100% { transform: rotate(360deg); box-shadow: 0 0 30px var(--accent-dim); }
+}
+
+/* ===== 14. MAX PLAYER SLIDE IN ===== */
+.max-player.open {
+  animation: maxSlide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes maxSlide {
+  0% { opacity: 0; transform: scale(0.9) translateY(30px); }
+  60% { opacity: 1; transform: scale(1.02) translateY(-5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ===== 15. MINI PLAYER SLIDE ===== */
+.mini-player {
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mini-player.visible {
+  animation: miniSlide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes miniSlide {
+  0% { transform: translateY(100%) scale(0.95); }
+  60% { transform: translateY(-10px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* ===== 16. PROGRESS BAR ANIMATION ===== */
+.bar {
+  animation: barMove 2s ease-in-out infinite;
+}
+@keyframes barMove {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* ===== 17. SONG CARD PLAYING STATE ===== */
+.song-card.is-playing {
+  animation: playingGlow 2s ease-in-out infinite;
+}
+@keyframes playingGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); transform: scale(1); }
+  50% { box-shadow: 0 0 40px rgba(249,115,22,0.3); transform: scale(1.02); }
+}
+
+/* ===== 18. FEATURED CARD FLOAT ===== */
+.featured-card {
+  animation: featuredFloat 4s ease-in-out infinite;
+}
+.featured-card:nth-child(1) { animation-delay: 0s; }
+.featured-card:nth-child(2) { animation-delay: 0.5s; }
+@keyframes featuredFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ===== 19. SUGGESTION DROPDOWN FADE ===== */
+.suggest-dropdown {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.suggest-dropdown.visible {
+  animation: dropdownFade 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes dropdownFade {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===== 20. CHIP CLICK RIPPLE ===== */
+.chip:active {
+  animation: chipPress 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes chipPress {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* ===== 21. GRADIENT TEXT ANIMATION ===== */
+.logo-text {
+  background: linear-gradient(135deg, #FFB347, #FF7E05, #FFB347);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientText 3s ease-in-out infinite;
+}
+@keyframes gradientText {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ===== 22. SHIMMER LOADING EFFECT ===== */
+.rail-skel {
+  background: linear-gradient(100deg, 
+    var(--surface) 30%, 
+    var(--surface2) 50%, 
+    var(--surface) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== 23. VOLUME SLIDER GLOW ===== */
+.mp-vol {
+  transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-vol:hover {
+  height: 6px;
+}
+.mp-vol::-webkit-slider-thumb {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-vol:hover::-webkit-slider-thumb {
+  transform: scale(1.5);
+  box-shadow: 0 0 30px var(--accent-glow);
+}
+
+/* ===== 24. EQUALIZER BARS WITH WAVE ===== */
+.eq-bar {
+  animation: eqBounce 0.8s ease-in-out infinite;
+}
+.eq-bar:nth-child(1) { animation-delay: 0s; }
+.eq-bar:nth-child(2) { animation-delay: 0.15s; }
+.eq-bar:nth-child(3) { animation-delay: 0.3s; }
+.eq-bar:nth-child(4) { animation-delay: 0.45s; }
+.eq-bar:nth-child(5) { animation-delay: 0.6s; }
+@keyframes eqBounce {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+/* ===== 25. PLAYER EXPAND BUTTON ===== */
+.mp-expand-btn {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-expand-btn:hover {
+  transform: rotate(180deg) scale(1.1);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 30px var(--accent-dim);
+}
+
+/* ===== 26. CLOSE BUTTON ROTATE ===== */
+.max-back-btn {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.max-back-btn:hover {
+  transform: rotate(-180deg) scale(1.1);
+  border-color: var(--accent-glow);
+  box-shadow: 0 0 30px var(--accent-dim);
+}
+
+/* ===== 27. SEEK FLASH ENHANCED ===== */
+.seek-flash {
+  transition: opacity 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.seek-flash.show {
+  animation: seekFlash 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes seekFlash {
+  0% { opacity: 0; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1.05); }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+/* ===== 28. TOAST CONTAINER SLIDE ===== */
+.toast-container {
+  animation: containerSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes containerSlide {
+  0% { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== 29. REPEAT BUTTON STATE ===== */
+#repeatBtn.active {
+  animation: repeatActive 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes repeatActive {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* ===== 30. SHUFFLE BUTTON STATE ===== */
+#maxShuffleBtn.active {
+  animation: shuffleActive 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes shuffleActive {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 31. LOOP BUTTON STATE ===== */
+#maxLoopBtn.active {
+  animation: loopActive 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes loopActive {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2) rotate(-10deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
 :root {
   --bg: #080b14;
   --surface: #0e1221;
