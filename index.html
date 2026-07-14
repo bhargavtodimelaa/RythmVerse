@@ -42,7 +42,438 @@ body{background:var(--bg);font-family:'Plus Jakarta Sans',system-ui,sans-serif;c
 
 /* ===== LAYOUT ===== */
 .shell{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:0 2rem 140px;}
+/* ========================================
+   ADD ALL OF THIS TO YOUR EXISTING CSS
+   ======================================== */
 
+/* ===== 1. ENHANCED LINEAR PROGRESS BAR ===== */
+.linear-track {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.bar {
+  position: absolute;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0.7;
+}
+.bar1 {
+  width: 40%;
+  animation: barMove1 2s ease-in-out infinite;
+}
+.bar2 {
+  width: 30%;
+  animation: barMove2 2s ease-in-out 0.5s infinite;
+}
+@keyframes barMove1 {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+@keyframes barMove2 {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ===== 2. SMOOTH SCROLLBAR FOR CARDS ===== */
+.cards-row {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+.cards-row::-webkit-scrollbar {
+  height: 4px;
+  background: transparent;
+}
+.cards-row::-webkit-scrollbar-track {
+  background: var(--surface2);
+  border-radius: 99px;
+}
+.cards-row::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 99px;
+  transition: background 0.3s ease;
+}
+.cards-row::-webkit-scrollbar-thumb:hover {
+  background: var(--accent2);
+}
+
+/* ===== 3. GLOWING CARD BORDER - ALREADY HAVE BUT ENHANCED ===== */
+.song-card {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.song-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, 
+    var(--accent), 
+    transparent 40%, 
+    transparent 60%, 
+    var(--accent)
+  );
+  background-size: 300% 300%;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+.song-card:hover::before {
+  opacity: 1;
+  animation: borderGlowSpin 3s ease-in-out infinite;
+}
+@keyframes borderGlowSpin {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ===== 4. CARD LIFT WITH SHADOW ===== */
+.song-card {
+  transform: perspective(800px) rotateX(0) rotateY(0) translateY(0);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.song-card:hover {
+  transform: perspective(800px) rotateX(2deg) rotateY(4deg) translateY(-8px);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+}
+
+/* ===== 5. PLAYING CARD PULSE ===== */
+.song-card.is-playing {
+  animation: playingPulse 2s ease-in-out infinite;
+  border-color: var(--accent-glow);
+}
+@keyframes playingPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+  50% { box-shadow: 0 0 30px rgba(249,115,22,0.15); }
+}
+
+/* ===== 6. SEARCH BAR GLOW ENHANCED ===== */
+.search-bar {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.search-bar:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim), 0 8px 32px rgba(0,0,0,0.4);
+  transform: scale(1.01);
+}
+
+/* ===== 7. TOAST SLIDE IN WITH BOUNCE ===== */
+.toast {
+  animation: toastBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes toastBounce {
+  0% { opacity: 0; transform: translateX(40px) scale(0.9); }
+  60% { opacity: 1; transform: translateX(-5px) scale(1.02); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ===== 8. NAV PILLS HOVER ENHANCED ===== */
+.nav-pill {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-pill:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+.nav-pill.active {
+  background: var(--accent-dim);
+  border-color: var(--accent-glow);
+  color: var(--accent2);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* ===== 9. FEATURED CARD ENHANCED ===== */
+.featured-card {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.featured-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+}
+.featured-play {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.featured-card:hover .featured-play {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+
+/* ===== 10. VOLUME SLIDER GLOW ===== */
+.mp-vol::-webkit-slider-thumb,
+.max-vol::-webkit-slider-thumb {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-vol:hover::-webkit-slider-thumb,
+.max-vol:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* ===== 11. PROGRESS SLIDER GLOW ===== */
+.mp-slider::-webkit-slider-thumb,
+.max-slider::-webkit-slider-thumb {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.mp-slider:hover::-webkit-slider-thumb,
+.max-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.4);
+  box-shadow: 0 0 25px var(--accent-glow);
+}
+
+/* ===== 12. CHIP BUTTONS ENHANCED ===== */
+.chip {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chip:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: var(--accent-glow);
+}
+.chip:active {
+  transform: scale(0.95);
+}
+
+/* ===== 13. HISTORY ROW ENHANCED ===== */
+.history-row {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.history-row:hover {
+  background: var(--surface2);
+  transform: translateX(4px) scale(1.005);
+}
+
+/* ===== 14. AMBIENT ORBS GLOW ===== */
+.ambient-orb {
+  transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#orb1 {
+  animation: orbFloat1 20s ease-in-out infinite;
+}
+#orb2 {
+  animation: orbFloat2 25s ease-in-out infinite;
+}
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-30px, 20px); }
+  66% { transform: translate(20px, -30px); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(40px, -20px); }
+  66% { transform: translate(-20px, 40px); }
+}
+
+/* ===== 15. FOOTER ENHANCED ===== */
+footer {
+  position: relative;
+  padding-top: 2rem;
+}
+footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.3;
+}
+footer span {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== 16. SUGGESTION ITEMS ENHANCED ===== */
+.suggest-item {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.suggest-item:hover {
+  background: var(--accent-dim);
+  transform: translateX(4px);
+}
+
+/* ===== 17. LOADER SPINNER ===== */
+.md3-spinner {
+  animation: md3-rotate 2s linear infinite;
+}
+.md3-path {
+  animation: md3-arc 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ===== 18. RESPONSIVE TWEAKS ===== */
+@media(max-width: 480px) {
+  .shell {
+    padding: 0 0.8rem 100px;
+  }
+  .cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.8rem;
+  }
+  .max-art {
+    width: 200px;
+    height: 200px;
+  }
+  .max-title {
+    font-size: 1.1rem;
+  }
+  .mp-controls {
+    gap: 0.2rem;
+  }
+  .mp-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .mp-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .mp-play-btn {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .mp-play-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .mp-thumb {
+    width: 40px;
+    height: 40px;
+  }
+  .mp-title {
+    font-size: 0.8rem;
+  }
+  .mp-artist {
+    font-size: 0.65rem;
+  }
+}
+
+/* ===== 19. SCROLLBAR FOR WHOLE PAGE ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 99px;
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent2);
+}
+
+/* ===== 20. GRADIENT TEXT EFFECTS ===== */
+.section-label h2 {
+  background: linear-gradient(135deg, var(--text), var(--text2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== 21. BUTTON RIPPLE ENHANCED ===== */
+.ripple-effect {
+  background: rgba(255,255,255,0.2);
+  animation: rippleOut 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes rippleOut {
+  0% { transform: scale(0); opacity: 0.8; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+/* ===== 22. MINI PLAYER GLOW BORDER ===== */
+.mini-player-inner {
+  border-top: 1px solid var(--accent-dim);
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.6);
+}
+
+/* ===== 23. PLAY BUTTON ANIMATION ENHANCED ===== */
+.mp-play-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+  animation: ringPulse 2s ease-out infinite;
+}
+@keyframes ringPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ===== 24. CARD IMAGE ZOOM ENHANCED ===== */
+.card-img {
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.song-card:hover .card-img {
+  transform: scale(1.08);
+}
+
+/* ===== 25. EQ BARS ENHANCED ===== */
+.eq-bar {
+  background: linear-gradient(180deg, var(--accent2), var(--accent));
+  border-radius: 2px;
+}
+.eq-bars.paused .eq-bar {
+  animation-play-state: paused;
+  opacity: 0.5;
+}
+
+/* ===== 26. TOAST ICON ENHANCED ===== */
+.toast-icon {
+  background: var(--accent-dim);
+  animation: toastIconPulse 2s ease-in-out infinite;
+}
+@keyframes toastIconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* ===== 27. SPARKLE CONTAINER FIX ===== */
+.sparkle-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+/* ===== 28. MAX PLAYER HEADER GLOW ===== */
+.max-header {
+  background: linear-gradient(180deg, rgba(8,11,20,0.98) 0%, transparent 100%);
+}
+
+/* ===== 29. SUGGESTION DROPDOWN SCROLL ===== */
+.suggest-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+.suggest-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+.suggest-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+.suggest-dropdown::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 99px;
+}
+
+/* ===== 30. FINAL TOUCH - BUTTON PRESS ===== */
+.max-ctrl:active,
+.mp-btn:active,
+.max-action-btn:active,
+.search-btn:active {
+  transform: scale(0.92);
+  transition: transform 0.1s ease;
+}
 /* ===== NAV ===== */
 nav{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 0 1rem;gap:1rem;flex-wrap:wrap;}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
