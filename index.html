@@ -4,9 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>RhythmVerse · Material Design</title>
-  <!-- Google Fonts + Material Symbols (Google UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" rel="stylesheet">
+</noscript>
   <style>
     /* ===== MATERIAL DESIGN THEME (MD3) ===== */
     :root {
@@ -899,7 +904,7 @@
   <!-- MINI PLAYER -->
   <div class="mini-player" id="miniPlayer">
     <div class="mini-player-inner">
-      <img class="mp-thumb" id="mpThumb" src="" alt="cover">
+     <img class="mp-thumb" id="mpThumb" src="" alt="cover" loading="lazy">
       <div class="mp-info" id="mpInfoClick">
         <div class="mp-title" id="mpTitle">—</div>
         <div class="mp-artist" id="mpArtist">—</div>
